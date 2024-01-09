@@ -15,9 +15,11 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Data
-//@NamedQueries({
-//        @NamedQuery(name = "Song.findAll", query = "SELECT p FROM Pet p WHERE p.name LIKE :name")
-//})
+@NamedQueries({
+        @NamedQuery(name = "pet.findAll", query = "SELECT p FROM Pet p")
+})
+
+
 public class Pet {
     @NonNull
     @Id

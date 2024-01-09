@@ -6,20 +6,29 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.domain.Pageable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import at.kaindorf.exa_103_petjob.pojos.Pet;
+import org.springframework.web.bind.annotation.*;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/petjob")
+@CrossOrigin("*")
+@RestController
 public class InitDatabase {
 
     private final PetRepository petRepo;
@@ -42,14 +51,27 @@ public class InitDatabase {
     }
 
 
-    public Optional<List<Pet>> getAllPetsByType(String type){
+    @GetMapping("/pets")
+    public List<Pet> getPetsByType(@RequestParam(required = false) String type, @RequestParam(required = false) Integer pageNo, @RequestParam(required = false) Integer pageSize) {
+        List<Pet> pets = new ArrayList<>();
+        if (pageNo == null || pageNo == 0) {
+            pageNo = 1;
+        }
+        if (pageSize == null || pageSize == 0) {
+            pageSize = 10;
+        }
 
-        List<Pet> allPets = petRepo.findAll();
+        if ( type == null ) {
+            pets = petRepo.findAll();
+        } else {
+            pets = petRepo.getPetsByType(type);
+        }
 
-        List<Pet> petsByType = allPets.stream().filter(p -> p.getType().equals(type)).toList();
+        Pageable pageable = PageRequest.of(pageNo -1, pageSize);
+        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        if (!petsByType.isEmpty()){
-            return Optional.of(petsByType);
-        }else return Optional.empty();
+
+
+        return petPage.getContent();
     }
 }
