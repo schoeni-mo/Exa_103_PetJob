@@ -19,9 +19,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import at.kaindorf.exa_103_petjob.pojos.Pet;
 import org.springframework.web.bind.annotation.*;
+
+import javax.swing.text.html.Option;
 
 @Component
 @Slf4j
@@ -50,28 +53,37 @@ public class InitDatabase {
         ownerRepo.saveAll(owners);
     }
 
+    @GetMapping("/types")
+    public Set<String> getTypes() {
+
+       return petRepo.getTypes();
+
+    }
+
+    @PatchMapping("/pet/{id}")
+    public void patchPet(@PathVariable Integer id, @RequestBody Pet pet) {
+        Optional<Pet> existing = petRepo.findById(id);
+
+        if ( existing.isPresent() ) {
+            Pet oldpet = existing.get();
+
+            oldpet.setName(pet.getName());
+            oldpet.setType(pet.getType());
+
+
+            petRepo.save(oldpet);
+        }
+    }
+
 
     @GetMapping("/pets")
-    public List<Pet> getPetsByType(@RequestParam(required = false) String type, @RequestParam(required = false) Integer pageNo, @RequestParam(required = false) Integer pageSize) {
-        List<Pet> pets = new ArrayList<>();
-        if (pageNo == null || pageNo == 0) {
-            pageNo = 1;
-        }
-        if (pageSize == null || pageSize == 0) {
-            pageSize = 10;
-        }
+    public Page<Pet> getPetsByType(@RequestParam(required = false, defaultValue = "Cat") String type, @RequestParam(required = false, defaultValue = "0") Integer pageNo, @RequestParam(required = false, defaultValue = "6") Integer pageSize) {
+        Page<Pet> pets;
 
-        if ( type == null ) {
-            pets = petRepo.findAll();
-        } else {
-            pets = petRepo.getPetsByType(type);
-        }
-
-        Pageable pageable = PageRequest.of(pageNo -1, pageSize);
-        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        pets = petRepo.getPetsByType(type, pageable);
 
 
-
-        return petPage.getContent();
+        return pets;
     }
 }
